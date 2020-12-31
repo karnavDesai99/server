@@ -823,7 +823,7 @@ void log_write_up_to(lsn_t lsn, bool flush_to_disk, bool rotate_key)
   log_write_flush_to_disk_low(flush_lsn);
   flush_lock.release(flush_lsn);
 
-  innobase_mysql_log_notify(flush_lsn);
+  innobase_mysql_log_notify(flush_lsn, false);
 }
 
 /** write to the log file up to the last log entry.

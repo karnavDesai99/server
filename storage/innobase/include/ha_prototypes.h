@@ -153,7 +153,9 @@ UNIV_INTERN
 void
 innobase_mysql_log_notify(
 /*======================*/
-	ib_uint64_t	flush_lsn);	/*!< in: LSN flushed to disk */
+	ib_uint64_t	flush_lsn,	/*!< in: LSN flushed to disk */
+	bool		skip_lock);	/*!< in: TRUE - don't lock critical
+					section, must be done by the caller */
 
 /** Converts a MySQL type to an InnoDB type. Note that this function returns
 the 'mtype' of InnoDB. InnoDB differentiates between MySQL's old <= 4.1
