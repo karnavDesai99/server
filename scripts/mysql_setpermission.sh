@@ -56,13 +56,20 @@ my $sqlhost = "";
 my $user = "";
 
 $dbh=$host=$opt_user= $opt_password= $opt_help= $opt_host= $opt_socket= "";
-$opt_port=0;
+$opt_port=3306;
 
 read_my_cnf();		# Read options from ~/.my.cnf
 
 GetOptions("user=s","password=s","help","host=s","socket=s","port=i");
 
 usage() if ($opt_help); # the help function
+
+## User may have put the port with the host.
+
+if ($opt_host =~ s/:(\d+)$//)
+{
+    $opt_port = $1;
+}
 
 if ($opt_host eq '')
 {
@@ -84,10 +91,22 @@ if ($opt_password eq '')
   print "\n";
 }
 
+## Socket takes precedence.
+my $dsn;
+$dsn ="DBI:MariaDB:;";
+
+if ($opt_socket and -S $opt_socket)
+{
+    $dsn .= "mariadb_socket=$opt_socket";
+}
+else
+{
+  $dsn = "DBI:MariaDB:host=$sqlhost;port=$opt_port";
+}
 
 # make the connection to MariaDB
-$dbh= DBI->connect("DBI:MariaDB:mysql:host=$sqlhost:port=$opt_port:mariadb_socket=$opt_socket",$opt_user,$opt_password, {PrintError => 0}) ||
-  die("Can't make a connection to the mysql server.\n The error: $DBI::errstr");
+$dbh= DBI->connect($dsn,$opt_user,$opt_password, { RaiseError => 1, PrintError => 0}) ||
+  die("Can't make a connection to the MariaDB server.\n The error: $DBI::errstr");
 
 # the start of the program
 &q1();
@@ -195,7 +214,8 @@ sub setpwd
   {
     $pass = "PASSWORD(". $dbh->quote($pass) . ")";
   }
-  my $sth = $dbh->prepare("update user set Password=$pass where User = $user and Host = $host") || die $dbh->errstr;
+  my $uh= $user.'@'.$host;
+  my $sth = $dbh->prepare("set password for $uh =$pass") || die $dbh->errstr;
   $sth->execute || die $dbh->errstr;
   $sth->finish;
   print "The password is set for user $user.\n\n";
@@ -403,7 +423,7 @@ sub user
     chomp($answer);
     if ($answer)
     {
-      my $sth = $dbh->prepare("select User from user where User = '$answer'") || die $dbh->errstr;
+      my $sth = $dbh->prepare("select User from mysql.user where User = '$answer'") || die $dbh->errstr;
       $sth->execute || die $dbh->errstr;
       my @r = $sth->fetchrow_array;
       if ($r[0])
@@ -538,7 +558,7 @@ sub hosts
   print "We now need to know which host for $user we have to change.\n";
   print "Choose from the following hosts: \n";
   $user = $dbh->quote($user);
-  my $sth = $dbh->prepare("select Host,User from user where User = $user") || die $dbh->errstr;
+  my $sth = $dbh->prepare("select Host,User from mysql.user where User = $user") || die $dbh->errstr;
   $sth->execute || die $dbh->errstr;
   while (my @r = $sth->fetchrow_array)
   {
@@ -551,7 +571,7 @@ sub hosts
     chomp($answer);
     if ($answer)
     {
-      $sth = $dbh->prepare("select Host,User from user where Host = '$answer' and User = $user") || die $dbh->errstr;
+      $sth = $dbh->prepare("select Host,User from mysql.user where Host = '$answer' and User = $user") || die $dbh->errstr;
       $sth->execute || die $dbh->errstr;
       my @r = $sth->fetchrow_array;
       if ($r[0])
@@ -597,8 +617,10 @@ sub read_my_cnf
   {
     if (/^\[(client|perl)\]/i)
     {
+      print "Options read from mycnf:\n";
       while ((defined($_=<TMP>)) && !/^\[\w+\]/)
       {
+  next if /^\s*($|#)/;  ## skip blanks and comments
 	print $_;
 	if (/^host\s*=\s*(\S+)/i)
 	{
@@ -621,6 +643,7 @@ sub read_my_cnf
 	  $opt_socket = $1;
 	}
       }
+      print "------------------------\n";
     }
   }
   close(TMP);
