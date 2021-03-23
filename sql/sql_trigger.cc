@@ -94,13 +94,11 @@ Trigger_creation_ctx::create(THD *thd,
   CHARSET_INFO *db_cl;
 
   bool invalid_creation_ctx= FALSE;
+  myf utf8_flag= thd->get_utf8_flag();
 
   if (resolve_charset(client_cs_name->str,
                       thd->variables.character_set_client,
-                      &client_cs,
-                      thd->variables.old_behavior &
-                           OLD_MODE_UTF8_IS_UTF8MB3 ?
-                           MYF(MY_UTF8_IS_UTF8MB3):MYF(0)))
+                      &client_cs, MYF(utf8_flag)))
   {
     sql_print_warning("Trigger for table '%s'.'%s': "
                       "invalid character_set_client value (%s).",
@@ -113,10 +111,7 @@ Trigger_creation_ctx::create(THD *thd,
 
   if (resolve_collation(connection_cl_name->str,
                         thd->variables.collation_connection,
-                        &connection_cl,
-                        thd->variables.old_behavior &
-                             OLD_MODE_UTF8_IS_UTF8MB3 ?
-                        MYF(MY_UTF8_IS_UTF8MB3):MYF(0)))
+                        &connection_cl,MYF(utf8_flag)))
   {
     sql_print_warning("Trigger for table '%s'.'%s': "
                       "invalid collation_connection value (%s).",
@@ -127,9 +122,7 @@ Trigger_creation_ctx::create(THD *thd,
     invalid_creation_ctx= TRUE;
   }
 
-  if (resolve_collation(db_cl_name->str, NULL, &db_cl,thd->variables.old_behavior &
-                                           OLD_MODE_UTF8_IS_UTF8MB3 ?
-                                           MYF(MY_UTF8_IS_UTF8MB3) : MYF(0)))
+  if (resolve_collation(db_cl_name->str, NULL, &db_cl, MYF(utf8_flag)))
   {
     sql_print_warning("Trigger for table '%s'.'%s': "
                       "invalid database_collation value (%s).",

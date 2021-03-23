@@ -1023,7 +1023,7 @@ const char *my_dlerror(const char *dlpath);
 
 /* character sets */
 extern void my_charset_loader_init_mysys(MY_CHARSET_LOADER *loader);
-extern uint get_charset_number(const char *cs_name, uint cs_flags);
+extern uint get_charset_number(const char *cs_name, uint cs_flags, myf flags);
 extern uint get_collation_number(const char *name,myf flags);
 extern const char *get_charset_name(uint cs_number);
 

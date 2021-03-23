@@ -547,6 +547,7 @@ bool load_db_opt(THD *thd, const char *path, Schema_specification_st *create)
   DBUG_ENTER("load_db_opt");
   bool error=1;
   size_t nbytes;
+  myf utf8_flag= thd->get_utf8_flag();
 
   bzero((char*) create,sizeof(*create));
   create->default_table_charset= thd->variables.collation_server;
@@ -583,14 +584,9 @@ bool load_db_opt(THD *thd, const char *path, Schema_specification_st *create)
            default-collation commands.
         */
         if (!(create->default_table_charset=
-        get_charset_by_csname(pos+1, MY_CS_PRIMARY,
-                              thd->variables.old_behavior &
-                                   OLD_MODE_UTF8_IS_UTF8MB3 ?
-                                   MYF(MY_UTF8_IS_UTF8MB3) : MYF(0))) &&
+        get_charset_by_csname(pos+1, MY_CS_PRIMARY, MYF(utf8_flag))) &&
             !(create->default_table_charset=
-              get_charset_by_name(pos+1, thd->variables.old_behavior &
-                                              OLD_MODE_UTF8_IS_UTF8MB3 ?
-                                              MYF(MY_UTF8_IS_UTF8MB3) : MYF(0))))
+              get_charset_by_name(pos+1, MYF(utf8_flag))))
         {
           sql_print_error("Error while loading database options: '%s':",path);
           sql_print_error(ER_THD(thd, ER_UNKNOWN_CHARACTER_SET),pos+1);
@@ -599,10 +595,7 @@ bool load_db_opt(THD *thd, const char *path, Schema_specification_st *create)
       }
       else if (!strncmp(buf,"default-collation", (pos-buf)))
       {
-        if (!(create->default_table_charset= get_charset_by_name(pos+1,
-                                                           thd->variables.old_behavior &
-                                                                OLD_MODE_UTF8_IS_UTF8MB3 ?
-                                                                MYF(MY_UTF8_IS_UTF8MB3) : MYF(0))))
+        if (!(create->default_table_charset= get_charset_by_name(pos+1, MYF(utf8_flag))))
         {
           sql_print_error("Error while loading database options: '%s':",path);
           sql_print_error(ER_THD(thd, ER_UNKNOWN_COLLATION),pos+1);

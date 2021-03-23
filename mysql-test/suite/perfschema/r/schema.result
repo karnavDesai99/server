@@ -1081,19 +1081,9 @@ rwlock_instances	CREATE TABLE `rwlock_instances` (
 show create table setup_actors;
 Table	Create Table
 setup_actors	CREATE TABLE `setup_actors` (
-<<<<<<< HEAD
-  `HOST` char(60) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL DEFAULT '%',
-  `USER` char(128) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL DEFAULT '%',
-  `ROLE` char(128) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL DEFAULT '%',
-||||||| constructed merge base
-  `HOST` char(60) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL DEFAULT '%',
-  `USER` char(128) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL DEFAULT '%',
-  `ROLE` char(16) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL DEFAULT '%',
-=======
   `HOST` char(60) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL DEFAULT '%',
   `USER` char(128) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL DEFAULT '%',
-  `ROLE` char(16) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL DEFAULT '%',
->>>>>>> MDEV-8334: Rename utf8 to utf8mb3
+  `ROLE` char(128) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL DEFAULT '%',
   `ENABLED` enum('YES','NO') NOT NULL DEFAULT 'YES',
   `HISTORY` enum('YES','NO') NOT NULL DEFAULT 'YES'
 ) ENGINE=PERFORMANCE_SCHEMA DEFAULT CHARSET=utf8mb3

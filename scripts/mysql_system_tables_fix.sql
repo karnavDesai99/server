@@ -73,7 +73,7 @@ ALTER TABLE tables_priv
   MODIFY Table_name char(64) NOT NULL default '',
   MODIFY Grantor char(141) COLLATE utf8_bin NOT NULL default '',
   ENGINE=Aria,
-  CONVERT TO CHARACTER SET utf8mb3 COLLATE utf8_bin;
+  CONVERT TO CHARACTER SET utf8 COLLATE utf8_bin;
 
 ALTER TABLE tables_priv
   MODIFY Column_priv set('Select','Insert','Update','References')
@@ -101,7 +101,7 @@ ALTER TABLE columns_priv
   MODIFY Table_name char(64) NOT NULL default '',
   MODIFY Column_name char(64) NOT NULL default '',
   ENGINE=Aria,
-  CONVERT TO CHARACTER SET utf8mb3 COLLATE utf8_bin,
+  CONVERT TO CHARACTER SET utf8 COLLATE utf8_bin,
   COMMENT='Column privileges';
 
 ALTER TABLE columns_priv
@@ -165,7 +165,7 @@ alter table func comment='User defined functions';
 ALTER TABLE user
   MODIFY Host char(60) NOT NULL default '',
   MODIFY User char(80) binary NOT NULL default '',
-  ENGINE=Aria, CONVERT TO CHARACTER SET utf8mb3 COLLATE utf8_bin;
+  ENGINE=Aria, CONVERT TO CHARACTER SET utf8 COLLATE utf8_bin;
 
 # In MySQL 5.7.6 the Password column is removed. Recreate it to preserve the number
 # of columns MariaDB expects in the user table.
@@ -209,7 +209,7 @@ ALTER TABLE db
   MODIFY Host char(60) NOT NULL default '',
   MODIFY Db char(64) NOT NULL default '',
   MODIFY User char(80) binary NOT NULL default '',
-  ENGINE=Aria, CONVERT TO CHARACTER SET utf8mb3 COLLATE utf8_bin;
+  ENGINE=Aria, CONVERT TO CHARACTER SET utf8 COLLATE utf8_bin;
 ALTER TABLE db
   MODIFY  Select_priv enum('N','Y') COLLATE utf8_general_ci DEFAULT 'N' NOT NULL,
   MODIFY  Insert_priv enum('N','Y') COLLATE utf8_general_ci DEFAULT 'N' NOT NULL,
@@ -226,7 +226,7 @@ ALTER TABLE db
 
 
 ALTER TABLE func
-  ENGINE=Aria, CONVERT TO CHARACTER SET utf8mb3 COLLATE utf8_bin;
+  ENGINE=Aria, CONVERT TO CHARACTER SET utf8 COLLATE utf8_bin;
 ALTER TABLE func
   MODIFY type enum ('function','aggregate') COLLATE utf8_general_ci NOT NULL;
 
@@ -270,7 +270,7 @@ SET GLOBAL slow_query_log = @old_log_state;
 ALTER TABLE plugin
   MODIFY name varchar(64) COLLATE utf8_general_ci NOT NULL DEFAULT '',
   MODIFY dl varchar(128) COLLATE utf8_general_ci NOT NULL DEFAULT '',
-  CONVERT TO CHARACTER SET utf8mb3 COLLATE utf8_general_ci;
+  CONVERT TO CHARACTER SET utf8 COLLATE utf8_general_ci;
 
 #
 # Detect whether we had Create_view_priv
@@ -362,7 +362,7 @@ UPDATE user LEFT JOIN db USING (Host,User) SET Create_user_priv='Y'
 
 ALTER TABLE procs_priv
   ENGINE=Aria,
-  CONVERT TO CHARACTER SET utf8mb3 COLLATE utf8_bin;
+  CONVERT TO CHARACTER SET utf8 COLLATE utf8_bin;
 
 ALTER TABLE procs_priv
   MODIFY Proc_priv set('Execute','Alter Routine','Grant')
@@ -431,11 +431,11 @@ ALTER TABLE proc MODIFY name char(64) DEFAULT '' NOT NULL,
                             'SIMULTANEOUS_ASSIGNMENT',
                             'TIME_ROUND_FRACTIONAL'
                             ) DEFAULT '' NOT NULL,
-                 DEFAULT CHARACTER SET utf8mb3;
+                 DEFAULT CHARACTER SET utf8;
 
 # Correct the character set and collation
 # Reset some fields after the conversion
-ALTER TABLE proc CONVERT TO CHARACTER SET utf8mb3,
+ALTER TABLE proc CONVERT TO CHARACTER SET utf8,
                   MODIFY db char(64) binary DEFAULT '' NOT NULL,
                   MODIFY definer char(141) binary DEFAULT '' NOT NULL,
                   MODIFY comment text binary NOT NULL;
@@ -516,13 +516,13 @@ ALTER TABLE proc ADD aggregate enum('NONE', 'GROUP') DEFAULT 'NONE' NOT NULL
 SET @hadEventPriv := 0;
 SELECT @hadEventPriv :=1 FROM user WHERE Event_priv IS NOT NULL;
 
-ALTER TABLE user ADD Event_priv enum('N','Y') character set utf8mb3 DEFAULT 'N' NOT NULL AFTER Create_user_priv;
-ALTER TABLE user MODIFY Event_priv enum('N','Y') character set utf8mb3 DEFAULT 'N' NOT NULL AFTER Create_user_priv;
+ALTER TABLE user ADD Event_priv enum('N','Y') character set utf8 DEFAULT 'N' NOT NULL AFTER Create_user_priv;
+ALTER TABLE user MODIFY Event_priv enum('N','Y') character set utf8 DEFAULT 'N' NOT NULL AFTER Create_user_priv;
 
 UPDATE user SET Event_priv=Super_priv WHERE @hadEventPriv = 0;
 
-ALTER TABLE db ADD Event_priv enum('N','Y') character set utf8mb3 DEFAULT 'N' NOT NULL;
-ALTER TABLE db MODIFY Event_priv enum('N','Y') character set utf8mb3 DEFAULT 'N' NOT NULL;
+ALTER TABLE db ADD Event_priv enum('N','Y') character set utf8 DEFAULT 'N' NOT NULL;
+ALTER TABLE db MODIFY Event_priv enum('N','Y') character set utf8 DEFAULT 'N' NOT NULL;
 
 #
 # EVENT table
@@ -568,7 +568,7 @@ ALTER TABLE event MODIFY sql_mode
                             'SIMULTANEOUS_ASSIGNMENT',
                             'TIME_ROUND_FRACTIONAL'
                             ) DEFAULT '' NOT NULL AFTER on_completion;
-ALTER TABLE event MODIFY name char(64) CHARACTER SET utf8mb3 NOT NULL default '';
+ALTER TABLE event MODIFY name char(64) CHARACTER SET utf8 NOT NULL default '';
 
 ALTER TABLE event ADD COLUMN originator INT UNSIGNED NOT NULL AFTER comment;
 ALTER TABLE event MODIFY COLUMN originator INT UNSIGNED NOT NULL;
@@ -658,7 +658,6 @@ ALTER TABLE user ADD account_locked enum('N', 'Y') COLLATE utf8_general_ci DEFAU
 ALTER TABLE user ADD is_role enum('N', 'Y') COLLATE utf8_general_ci DEFAULT 'N' NOT NULL AFTER account_locked;
 ALTER TABLE user ADD default_role char(80) binary DEFAULT '' NOT NULL AFTER is_role;
 ALTER TABLE user ADD max_statement_time decimal(12,6) DEFAULT 0 NOT NULL AFTER default_role;
-<<<<<<< HEAD
 
 -- Somewhere above, we ran ALTER TABLE user .... CONVERT TO CHARACTER SET utf8 COLLATE utf8_bin.
 -- we want password_expired column to have collation utf8_general_ci.
@@ -678,17 +677,6 @@ ALTER TABLE user MODIFY plugin char(64) CHARACTER SET latin1 DEFAULT '' NOT NULL
                  MODIFY IF EXISTS password_last_changed timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER max_statement_time,
                  MODIFY IF EXISTS password_lifetime smallint unsigned DEFAULT NULL AFTER password_last_changed,
                  MODIFY IF EXISTS account_locked enum('N', 'Y') CHARACTER SET utf8 DEFAULT 'N' NOT NULL after password_lifetime;
-||||||| constructed merge base
--- Somewhere above, we ran ALTER TABLE user .... CONVERT TO CHARACTER SET utf8 COLLATE utf8_bin.
---  we want password_expired column to have collation utf8_general_ci.
-ALTER TABLE user MODIFY password_expired ENUM('N', 'Y') COLLATE utf8_general_ci DEFAULT 'N' NOT NULL;
-ALTER TABLE user MODIFY is_role enum('N', 'Y') COLLATE utf8_general_ci DEFAULT 'N' NOT NULL;
-=======
--- Somewhere above, we ran ALTER TABLE user .... CONVERT TO CHARACTER SET utf8mb3 COLLATE utf8_bin.
---  we want password_expired column to have collation utf8_general_ci.
-ALTER TABLE user MODIFY password_expired ENUM('N', 'Y') COLLATE utf8_general_ci DEFAULT 'N' NOT NULL;
-ALTER TABLE user MODIFY is_role enum('N', 'Y') COLLATE utf8_general_ci DEFAULT 'N' NOT NULL;
->>>>>>> MDEV-8334: Rename utf8 to utf8mb3
 
 -- Checking for any duplicate hostname and username combination are exists.
 -- If exits we will throw error.
@@ -784,7 +772,7 @@ ALTER TABLE index_stats ENGINE=Aria transactional=0;
 
 DELIMITER //
 IF 'BASE TABLE' = (select table_type from information_schema.tables where table_schema=database() and table_name='user') THEN
-  CREATE TABLE IF NOT EXISTS global_priv (Host char(60) binary DEFAULT '', User char(80) binary DEFAULT '', Priv JSON NOT NULL DEFAULT '{}' CHECK(JSON_VALID(Priv)), PRIMARY KEY Host (Host,User)) engine=Aria transactional=1 CHARACTER SET utf8mb3 COLLATE utf8_bin comment='Users and global privileges'
+  CREATE TABLE IF NOT EXISTS global_priv (Host char(60) binary DEFAULT '', User char(80) binary DEFAULT '', Priv JSON NOT NULL DEFAULT '{}' CHECK(JSON_VALID(Priv)), PRIMARY KEY Host (Host,User)) engine=Aria transactional=1 CHARACTER SET utf8 COLLATE utf8_bin comment='Users and global privileges'
   SELECT Host, User, JSON_COMPACT(JSON_OBJECT('access',
                              1*('Y'=Select_priv)+
                              2*('Y'=Insert_priv)+

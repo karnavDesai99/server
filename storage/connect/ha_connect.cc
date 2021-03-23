@@ -6423,6 +6423,7 @@ int ha_connect::create(const char *name, TABLE *table_arg,
   TABLE  *st= table;                       // Probably unuseful
   THD    *thd= ha_thd();
   LEX_CSTRING cnc = table_arg->s->connect_string;
+  myf utf8_flag= thd->get_utf8_flag();
 #if defined(WITH_PARTITION_STORAGE_ENGINE)
   partition_info *part_info= table_arg->part_info;
 #else		// !WITH_PARTITION_STORAGE_ENGINE
@@ -6483,9 +6484,7 @@ int ha_connect::create(const char *name, TABLE *table_arg,
 
     if (!(data_charset= get_charset_by_csname(options->data_charset,
                                                     MY_CS_PRIMARY,
-                                                    thd->variables.old_behavior &
-                                                    OLD_MODE_UTF8_IS_UTF8MB3 ?
-                                                    MYF(MY_UTF8_IS_UTF8MB3) : MYF(0)))) {
+                                                     MYF(utf8_flag)))) {
       my_error(ER_UNKNOWN_CHARACTER_SET, MYF(0), options->data_charset);
       DBUG_RETURN(HA_ERR_INTERNAL_ERROR);
       } // endif charset

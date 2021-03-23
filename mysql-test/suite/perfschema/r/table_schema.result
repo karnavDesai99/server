@@ -896,54 +896,11 @@ def	performance_schema	session_connect_attrs	PROCESSLIST_ID	1	NULL	NO	int	NULL	N
 def	performance_schema	session_connect_attrs	ATTR_NAME	2	NULL	NO	varchar	32	96	NULL	NULL	NULL	utf8mb3	utf8mb3_bin	varchar(32)			select,insert,update,references		NEVER	NULL
 def	performance_schema	session_connect_attrs	ATTR_VALUE	3	NULL	YES	varchar	1024	3072	NULL	NULL	NULL	utf8mb3	utf8mb3_bin	varchar(1024)			select,insert,update,references		NEVER	NULL
 def	performance_schema	session_connect_attrs	ORDINAL_POSITION	4	NULL	YES	int	NULL	NULL	10	0	NULL	NULL	NULL	int(11)			select,insert,update,references		NEVER	NULL
-<<<<<<< HEAD
-def	performance_schema	session_status	VARIABLE_NAME	1	NULL	NO	varchar	64	192	NULL	NULL	NULL	utf8	utf8_general_ci	varchar(64)			select,insert,update,references		NEVER	NULL
-def	performance_schema	session_status	VARIABLE_VALUE	2	NULL	YES	varchar	1024	3072	NULL	NULL	NULL	utf8	utf8_general_ci	varchar(1024)			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_actors	HOST	1	'%'	NO	char	60	180	NULL	NULL	NULL	utf8	utf8_bin	char(60)			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_actors	USER	2	'%'	NO	char	128	384	NULL	NULL	NULL	utf8	utf8_bin	char(128)			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_actors	ROLE	3	'%'	NO	char	128	384	NULL	NULL	NULL	utf8	utf8_bin	char(128)			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_actors	ENABLED	4	'YES'	NO	enum	3	9	NULL	NULL	NULL	utf8	utf8_general_ci	enum('YES','NO')			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_actors	HISTORY	5	'YES'	NO	enum	3	9	NULL	NULL	NULL	utf8	utf8_general_ci	enum('YES','NO')			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_consumers	NAME	1	NULL	NO	varchar	64	192	NULL	NULL	NULL	utf8	utf8_general_ci	varchar(64)			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_consumers	ENABLED	2	NULL	NO	enum	3	9	NULL	NULL	NULL	utf8	utf8_general_ci	enum('YES','NO')			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_instruments	NAME	1	NULL	NO	varchar	128	384	NULL	NULL	NULL	utf8	utf8_general_ci	varchar(128)			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_instruments	ENABLED	2	NULL	NO	enum	3	9	NULL	NULL	NULL	utf8	utf8_general_ci	enum('YES','NO')			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_instruments	TIMED	3	NULL	NO	enum	3	9	NULL	NULL	NULL	utf8	utf8_general_ci	enum('YES','NO')			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_objects	OBJECT_TYPE	1	'TABLE'	NO	enum	9	27	NULL	NULL	NULL	utf8	utf8_general_ci	enum('EVENT','FUNCTION','PROCEDURE','TABLE','TRIGGER')			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_objects	OBJECT_SCHEMA	2	'%'	YES	varchar	64	192	NULL	NULL	NULL	utf8	utf8_general_ci	varchar(64)			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_objects	OBJECT_NAME	3	'%'	NO	varchar	64	192	NULL	NULL	NULL	utf8	utf8_general_ci	varchar(64)			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_objects	ENABLED	4	'YES'	NO	enum	3	9	NULL	NULL	NULL	utf8	utf8_general_ci	enum('YES','NO')			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_objects	TIMED	5	'YES'	NO	enum	3	9	NULL	NULL	NULL	utf8	utf8_general_ci	enum('YES','NO')			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_timers	NAME	1	NULL	NO	varchar	64	192	NULL	NULL	NULL	utf8	utf8_general_ci	varchar(64)			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_timers	TIMER_NAME	2	NULL	NO	enum	11	33	NULL	NULL	NULL	utf8	utf8_general_ci	enum('CYCLE','NANOSECOND','MICROSECOND','MILLISECOND','TICK')			select,insert,update,references		NEVER	NULL
-def	performance_schema	socket_instances	EVENT_NAME	1	NULL	NO	varchar	128	384	NULL	NULL	NULL	utf8	utf8_general_ci	varchar(128)			select,insert,update,references		NEVER	NULL
-||||||| constructed merge base
-def	performance_schema	session_status	VARIABLE_NAME	1	NULL	NO	varchar	64	192	NULL	NULL	NULL	utf8	utf8_general_ci	varchar(64)			select,insert,update,references		NEVER	NULL
-def	performance_schema	session_status	VARIABLE_VALUE	2	NULL	YES	varchar	1024	3072	NULL	NULL	NULL	utf8	utf8_general_ci	varchar(1024)			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_actors	HOST	1	'%'	NO	char	60	180	NULL	NULL	NULL	utf8	utf8_bin	char(60)			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_actors	USER	2	'%'	NO	char	128	384	NULL	NULL	NULL	utf8	utf8_bin	char(128)			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_actors	ROLE	3	'%'	NO	char	16	48	NULL	NULL	NULL	utf8	utf8_bin	char(16)			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_actors	ENABLED	4	'YES'	NO	enum	3	9	NULL	NULL	NULL	utf8	utf8_general_ci	enum('YES','NO')			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_actors	HISTORY	5	'YES'	NO	enum	3	9	NULL	NULL	NULL	utf8	utf8_general_ci	enum('YES','NO')			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_consumers	NAME	1	NULL	NO	varchar	64	192	NULL	NULL	NULL	utf8	utf8_general_ci	varchar(64)			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_consumers	ENABLED	2	NULL	NO	enum	3	9	NULL	NULL	NULL	utf8	utf8_general_ci	enum('YES','NO')			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_instruments	NAME	1	NULL	NO	varchar	128	384	NULL	NULL	NULL	utf8	utf8_general_ci	varchar(128)			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_instruments	ENABLED	2	NULL	NO	enum	3	9	NULL	NULL	NULL	utf8	utf8_general_ci	enum('YES','NO')			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_instruments	TIMED	3	NULL	NO	enum	3	9	NULL	NULL	NULL	utf8	utf8_general_ci	enum('YES','NO')			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_objects	OBJECT_TYPE	1	'TABLE'	NO	enum	9	27	NULL	NULL	NULL	utf8	utf8_general_ci	enum('EVENT','FUNCTION','PROCEDURE','TABLE','TRIGGER')			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_objects	OBJECT_SCHEMA	2	'%'	YES	varchar	64	192	NULL	NULL	NULL	utf8	utf8_general_ci	varchar(64)			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_objects	OBJECT_NAME	3	'%'	NO	varchar	64	192	NULL	NULL	NULL	utf8	utf8_general_ci	varchar(64)			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_objects	ENABLED	4	'YES'	NO	enum	3	9	NULL	NULL	NULL	utf8	utf8_general_ci	enum('YES','NO')			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_objects	TIMED	5	'YES'	NO	enum	3	9	NULL	NULL	NULL	utf8	utf8_general_ci	enum('YES','NO')			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_timers	NAME	1	NULL	NO	varchar	64	192	NULL	NULL	NULL	utf8	utf8_general_ci	varchar(64)			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_timers	TIMER_NAME	2	NULL	NO	enum	11	33	NULL	NULL	NULL	utf8	utf8_general_ci	enum('CYCLE','NANOSECOND','MICROSECOND','MILLISECOND','TICK')			select,insert,update,references		NEVER	NULL
-def	performance_schema	socket_instances	EVENT_NAME	1	NULL	NO	varchar	128	384	NULL	NULL	NULL	utf8	utf8_general_ci	varchar(128)			select,insert,update,references		NEVER	NULL
-=======
 def	performance_schema	session_status	VARIABLE_NAME	1	NULL	NO	varchar	64	192	NULL	NULL	NULL	utf8mb3	utf8mb3_general_ci	varchar(64)			select,insert,update,references		NEVER	NULL
 def	performance_schema	session_status	VARIABLE_VALUE	2	NULL	YES	varchar	1024	3072	NULL	NULL	NULL	utf8mb3	utf8mb3_general_ci	varchar(1024)			select,insert,update,references		NEVER	NULL
 def	performance_schema	setup_actors	HOST	1	'%'	NO	char	60	180	NULL	NULL	NULL	utf8mb3	utf8mb3_bin	char(60)			select,insert,update,references		NEVER	NULL
 def	performance_schema	setup_actors	USER	2	'%'	NO	char	128	384	NULL	NULL	NULL	utf8mb3	utf8mb3_bin	char(128)			select,insert,update,references		NEVER	NULL
-def	performance_schema	setup_actors	ROLE	3	'%'	NO	char	16	48	NULL	NULL	NULL	utf8mb3	utf8mb3_bin	char(16)			select,insert,update,references		NEVER	NULL
+def	performance_schema	setup_actors	ROLE	3	'%'	NO	char	128	384	NULL	NULL	NULL	utf8mb3	utf8mb3_bin	char(128)			select,insert,update,references		NEVER	NULL
 def	performance_schema	setup_actors	ENABLED	4	'YES'	NO	enum	3	9	NULL	NULL	NULL	utf8mb3	utf8mb3_general_ci	enum('YES','NO')			select,insert,update,references		NEVER	NULL
 def	performance_schema	setup_actors	HISTORY	5	'YES'	NO	enum	3	9	NULL	NULL	NULL	utf8mb3	utf8mb3_general_ci	enum('YES','NO')			select,insert,update,references		NEVER	NULL
 def	performance_schema	setup_consumers	NAME	1	NULL	NO	varchar	64	192	NULL	NULL	NULL	utf8mb3	utf8mb3_general_ci	varchar(64)			select,insert,update,references		NEVER	NULL
@@ -959,7 +916,6 @@ def	performance_schema	setup_objects	TIMED	5	'YES'	NO	enum	3	9	NULL	NULL	NULL	ut
 def	performance_schema	setup_timers	NAME	1	NULL	NO	varchar	64	192	NULL	NULL	NULL	utf8mb3	utf8mb3_general_ci	varchar(64)			select,insert,update,references		NEVER	NULL
 def	performance_schema	setup_timers	TIMER_NAME	2	NULL	NO	enum	11	33	NULL	NULL	NULL	utf8mb3	utf8mb3_general_ci	enum('CYCLE','NANOSECOND','MICROSECOND','MILLISECOND','TICK')			select,insert,update,references		NEVER	NULL
 def	performance_schema	socket_instances	EVENT_NAME	1	NULL	NO	varchar	128	384	NULL	NULL	NULL	utf8mb3	utf8mb3_general_ci	varchar(128)			select,insert,update,references		NEVER	NULL
->>>>>>> MDEV-8334: Rename utf8 to utf8mb3
 def	performance_schema	socket_instances	OBJECT_INSTANCE_BEGIN	2	NULL	NO	bigint	NULL	NULL	20	0	NULL	NULL	NULL	bigint(20) unsigned			select,insert,update,references		NEVER	NULL
 def	performance_schema	socket_instances	THREAD_ID	3	NULL	YES	bigint	NULL	NULL	20	0	NULL	NULL	NULL	bigint(20) unsigned			select,insert,update,references		NEVER	NULL
 def	performance_schema	socket_instances	SOCKET_ID	4	NULL	NO	int	NULL	NULL	10	0	NULL	NULL	NULL	int(11)			select,insert,update,references		NEVER	NULL

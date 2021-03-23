@@ -13,14 +13,8 @@ select * from information_schema.SCHEMATA where schema_name > 'm';
 CATALOG_NAME	SCHEMA_NAME	DEFAULT_CHARACTER_SET_NAME	DEFAULT_COLLATION_NAME	SQL_PATH	SCHEMA_COMMENT
 def	mtr	latin1	latin1_swedish_ci	NULL	
 def	mysql	latin1	latin1_swedish_ci	NULL	
-<<<<<<< HEAD
-def	performance_schema	utf8	utf8_general_ci	NULL	
-def	sys	utf8	utf8_general_ci	NULL	
-||||||| constructed merge base
-def	performance_schema	utf8	utf8_general_ci	NULL	
-=======
 def	performance_schema	utf8mb3	utf8mb3_general_ci	NULL	
->>>>>>> MDEV-8334: Rename utf8 to utf8mb3
+def	sys	utf8mb3	utf8mb3_general_ci	NULL	
 def	test	latin1	latin1_swedish_ci	NULL	
 select schema_name from information_schema.schemata;
 schema_name

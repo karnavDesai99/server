@@ -875,13 +875,14 @@ set names utf8;
 -- resultset is non-binary for string type. This should be changed
 -- after Bug#29394 is implemented.
 ----------------------------------------------------------------
-SHOW CHARACTER SET LIKE 'utf8';
+SHOW CHARACTER SET LIKE 'utf8mb3';
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr
-def	information_schema	CHARACTER_SETS	CHARACTER_SETS	CHARACTER_SET_NAME	Charset	253	96	0	N	1	0	33
-def	information_schema	CHARACTER_SETS	CHARACTER_SETS	DESCRIPTION	Description	253	180	0	N	1	0	33
-def	information_schema	CHARACTER_SETS	CHARACTER_SETS	DEFAULT_COLLATE_NAME	Default collation	253	96	0	N	1	0	33
-def	information_schema	CHARACTER_SETS	CHARACTER_SETS	MAXLEN	Maxlen	8	3	0	N	32769	0	63
+def	information_schema	CHARACTER_SETS	CHARACTER_SETS	CHARACTER_SET_NAME	Charset	253	96	7	N	1	0	33
+def	information_schema	CHARACTER_SETS	CHARACTER_SETS	DESCRIPTION	Description	253	180	13	N	1	0	33
+def	information_schema	CHARACTER_SETS	CHARACTER_SETS	DEFAULT_COLLATE_NAME	Default collation	253	96	18	N	1	0	33
+def	information_schema	CHARACTER_SETS	CHARACTER_SETS	MAXLEN	Maxlen	8	3	1	N	32769	0	63
 Charset	Description	Default collation	Maxlen
+utf8mb3	UTF-8 Unicode	utf8mb3_general_ci	3
 ----------------------------------------------------------------
 SHOW COLLATION LIKE 'latin1_bin';
 Catalog	Database	Table	Table_alias	Column	Column_alias	Type	Length	Max length	Is_null	Flags	Decimals	Charsetnr

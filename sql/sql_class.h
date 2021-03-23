@@ -1044,36 +1044,6 @@ static inline void update_global_memory_status(int64 size)
   my_atomic_add64_explicit(ptr, size, MY_MEMORY_ORDER_RELAXED);
 }
 
-inline const char* get_alias_collation_or_charset_name(const char* name,
-                                                       bool utf8_is_utf8mb3)
-{
-  char *copy_of_name= (char*)name;
-  char start[6], result[64];
-  char *temp_cs_name;
-
-  if (!strchr(name,'_'))
-  {
-    if (!strcasecmp("utf8",name))
-      name = utf8_is_utf8mb3 ? "utf8mb3" : "utf8mb4";
-    return name;
-  }
-  else
-  {
-    strncpy(start, name, 5);
-    temp_cs_name= (char *)(utf8_is_utf8mb3 ? "utf8mb3_":"utf8mb4_");
-    if (!strncasecmp("utf8_", start,5))
-    {
-      copy_of_name+= 5;
-      result[63]='\0';
-      strcpy(result, temp_cs_name);
-      strcat(result, copy_of_name);
-      result[strlen(copy_of_name)+strlen(temp_cs_name)]='\0';
-      strcpy((char*)name,result);
-    }
-  }
-  return name;
-}
-
 /**
   Get collation by name, send error to client on failure.
   @param name     Collation name
@@ -1082,23 +1052,16 @@ inline const char* get_alias_collation_or_charset_name(const char* name,
   @retval         NULL on error
   @retval         Pointter to CHARSET_INFO with the given name on success
 */
-<<<<<<< HEAD
-static inline CHARSET_INFO *
-mysqld_collation_get_by_name(const char *name,
-||||||| constructed merge base
-inline CHARSET_INFO *
-mysqld_collation_get_by_name(const char *name,
-=======
 inline CHARSET_INFO *
 mysqld_collation_get_by_name(const char *name, bool utf8_is_utf8mb3,
->>>>>>> MDEV-8334: Rename utf8 to utf8mb3
                              CHARSET_INFO *name_cs= system_charset_info)
 {
   CHARSET_INFO *cs;
   MY_CHARSET_LOADER loader;
+  myf utf8_flag= utf8_is_utf8mb3 ? MY_UTF8_IS_UTF8MB3 : 0;
   my_charset_loader_init_mysys(&loader);
-  name =get_alias_collation_or_charset_name(name,utf8_is_utf8mb3);
-  if (!(cs= my_collation_get_by_name(&loader, name, MYF(0))))
+
+  if (!(cs= my_collation_get_by_name(&loader, name, MYF(utf8_flag))))
   {
     ErrConvString err(name, name_cs);
     my_error(ER_UNKNOWN_COLLATION, MYF(0), err.ptr());
@@ -5477,6 +5440,12 @@ public:
   Item *sp_fix_func_item(Item **it_addr);
   Item *sp_prepare_func_item(Item **it_addr, uint cols= 1);
   bool sp_eval_expr(Field *result_field, Item **expr_item_ptr);
+
+  myf get_utf8_flag()
+  {
+    return (variables.old_behavior & OLD_MODE_UTF8_IS_UTF8MB3 ?
+            MY_UTF8_IS_UTF8MB3 : 0);
+  }
 };
 
 

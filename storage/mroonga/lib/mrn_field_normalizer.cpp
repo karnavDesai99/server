@@ -111,10 +111,10 @@ namespace mrn {
     if ((strcmp(charset_info->name, "utf8mb3_general_ci") == 0) ||
         (strcmp(charset_info->name, "utf8mb4_general_ci") == 0)) {
       normalizer_name = "NormalizerMySQLGeneralCI";
-    } else if ((strcmp(charset_info->name, "utf8_unicode_ci") == 0) ||
+    } else if ((strcmp(charset_info->name, "utf8mb3_unicode_ci") == 0) ||
                (strcmp(charset_info->name, "utf8mb4_unicode_ci") == 0)) {
       normalizer_name = "NormalizerMySQLUnicodeCI";
-    } else if ((strcmp(charset_info->name, "utf8_unicode_520_ci") == 0) ||
+    } else if ((strcmp(charset_info->name, "utf8mb3_unicode_520_ci") == 0) ||
                (strcmp(charset_info->name, "utf8mb4_unicode_520_ci") == 0)) {
       normalizer_name = "NormalizerMySQLUnicode520CI";
     }

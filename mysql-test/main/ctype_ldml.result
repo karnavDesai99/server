@@ -6,8 +6,9 @@ set names utf8;
 show variables like 'character_sets_dir%';
 Variable_name	Value
 character_sets_dir	MYSQL_TEST_DIR/std_data/ldml/
-show collation like 'utf8_phone_ci';
+show collation like 'utf8mb3_phone_ci';
 Collation	Charset	Id	Default	Compiled	Sortlen
+utf8mb3_phone_ci	utf8mb3	352			8
 CREATE TABLE t1 (
 name VARCHAR(64),
 phone VARCHAR(64) CHARACTER SET utf8 COLLATE utf8_phone_ci
@@ -34,8 +35,9 @@ SELECT * FROM t1 WHERE phone='7 9 1 2 8 0 0 8 0 0 1';
 name	phone
 Bar	+7-912-800-80-01
 DROP TABLE t1;
-show collation like 'utf8_test_ci';
+show collation like 'utf8mb3_test_ci';
 Collation	Charset	Id	Default	Compiled	Sortlen
+utf8mb3_test_ci	utf8mb3	353			8
 create table t1 (c1 char(1) character set utf8 collate utf8_test_ci);
 insert into t1 values ('a');
 select * from t1 where c1='b';
@@ -522,8 +524,9 @@ a
 b
 DROP TABLE t1;
 SET NAMES utf8 COLLATE utf8_phone_ci;
-SHOW COLLATION LIKE 'utf8_phone_ci';
+show collation like 'utf8mb3_phone_ci';
 Collation	Charset	Id	Default	Compiled	Sortlen
+utf8mb3_phone_ci	utf8mb3	352			8
 SET NAMES utf8;
 SELECT hex(weight_string(_utf8mb4'a' collate utf8mb4_test_400_ci));
 hex(weight_string(_utf8mb4'a' collate utf8mb4_test_400_ci))
@@ -836,25 +839,25 @@ DROP TABLE t1;
 # WL#5624, unsupported features
 #
 SET NAMES utf8 COLLATE utf8_5624_2;
-ERROR HY000: Unknown collation: 'utf8mb3_5624_2'
+ERROR HY000: Unknown collation: 'utf8_5624_2'
 SHOW WARNINGS;
 Level	Code	Message
-Error	1273	Unknown collation: 'utf8mb3_5624_2'
+Error	1273	Unknown collation: 'utf8_5624_2'
 Warning	1273	Syntax error at '[strength tertiary]'
 SELECT _utf8'test' COLLATE utf8_5624_2;
-ERROR HY000: Unknown collation: 'utf8mb3_5624_2'
+ERROR HY000: Unknown collation: 'utf8_5624_2'
 SHOW WARNINGS;
 Level	Code	Message
-Error	1273	Unknown collation: 'utf8mb3_5624_2'
+Error	1273	Unknown collation: 'utf8_5624_2'
 Warning	1273	Syntax error at '[strength tertiary]'
 #
 # WL#5624, reset before primary ignorable
 #
 SET NAMES utf8 COLLATE utf8_5624_3;
-ERROR HY000: Unknown collation: 'utf8mb3_5624_3'
+ERROR HY000: Unknown collation: 'utf8_5624_3'
 SHOW WARNINGS;
 Level	Code	Message
-Error	1273	Unknown collation: 'utf8mb3_5624_3'
+Error	1273	Unknown collation: 'utf8_5624_3'
 Warning	1273	Can't reset before a primary ignorable character U+A48C
 #
 # WL#5624, \u without hex digits is equal to {'\', 'u'}
@@ -1161,10 +1164,10 @@ AAA	0E293359
 1	0E2A
 DROP TABLE t1;
 SET NAMES utf8 COLLATE utf8_5624_5_bad;
-ERROR HY000: Unknown collation: 'utf8mb3_5624_5_bad'
+ERROR HY000: Unknown collation: 'utf8_5624_5_bad'
 SHOW WARNINGS;
 Level	Code	Message
-Error	1273	Unknown collation: 'utf8mb3_5624_5_bad'
+Error	1273	Unknown collation: 'utf8_5624_5_bad'
 Warning	1273	Expansion too long: 'a\u002Daaaaaa10'
 #
 # End of WL#5624
@@ -3031,7 +3034,7 @@ SELECT 'chž'< 'i';
 'chž'< 'i'
 1
 SELECT 'a' COLLATE utf8_czech_test_bad_w2;
-ERROR HY000: Unknown collation: 'utf8mb3_czech_test_bad_w2'
+ERROR HY000: Unknown collation: 'utf8_czech_test_bad_w2'
 #
 # MDEV-7947 my_charset_same: strcmp() takes 0.37% in OLTP RO
 #

@@ -764,13 +764,16 @@ get_charset_number_internal(const char *charset_name, uint cs_flags)
 }
 
 
-uint get_charset_number(const char *charset_name, uint cs_flags)
+uint get_charset_number(const char *charset_name, uint cs_flags, myf flags)
 {
   uint id;
+  const char *new_charset_name= flags & MY_UTF8_IS_UTF8MB3 ? "utf8mb3" :
+                                                             "utf8mb4";
   my_pthread_once(&charsets_initialized, init_available_charsets);
   if ((id= get_charset_number_internal(charset_name, cs_flags)))
     return id;
-  if ((charset_name= !my_strcasecmp(&my_charset_latin1, charset_name, "utf8") ? "utf8mb3" : NULL))
+  if ((charset_name= !my_strcasecmp(&my_charset_latin1, charset_name, "utf8") ?
+                      new_charset_name : NULL))
     return get_charset_number_internal(charset_name, cs_flags);
   return 0;
 }
@@ -801,7 +804,7 @@ static CHARSET_INFO *inheritance_source_by_id(CHARSET_INFO *cs, uint refid)
 }
 
 
-static CHARSET_INFO *find_collation_data_inheritance_source(CHARSET_INFO *cs)
+static CHARSET_INFO *find_collation_data_inheritance_source(CHARSET_INFO *cs, myf flags)
 {
   const char *beg, *end;
   if (cs->tailoring &&
@@ -812,7 +815,7 @@ static CHARSET_INFO *find_collation_data_inheritance_source(CHARSET_INFO *cs)
     char name[MY_CS_NAME_SIZE + 1];
     memcpy(name, beg, end - beg);
     name[end - beg]= '\0';
-    return inheritance_source_by_id(cs, get_collation_number(name,MYF(0)));
+    return inheritance_source_by_id(cs, get_collation_number(name,MYF(flags)));
   }
   return NULL;
 }
@@ -867,7 +870,7 @@ get_internal_charset(MY_CHARSET_LOADER *loader, uint cs_number, myf flags)
         }
         if (!simple_8bit_collation_data_is_full(cs))
         {
-          CHARSET_INFO *refcl= find_collation_data_inheritance_source(cs);
+          CHARSET_INFO *refcl= find_collation_data_inheritance_source(cs, flags);
           if (refcl)
             inherit_collation_data(cs, refcl);
         }
@@ -953,28 +956,7 @@ my_collation_get_by_name(MY_CHARSET_LOADER *loader,
 CHARSET_INFO *get_charset_by_name(const char *cs_name, myf flags)
 {
   MY_CHARSET_LOADER loader;
-  my_bool utf8_is_utf8mb3= flags & MY_UTF8_IS_UTF8MB3 ? 1 : 0;
-  char *copy_of_name= (char*)cs_name;
-  char start[6], result[64];
-  char *temp_cs_name;
-  
   my_charset_loader_init_mysys(&loader);
-
-  if (!strcasecmp("utf8",copy_of_name))
-      cs_name = (const char*)(utf8_is_utf8mb3 ? "utf8mb3" : "utf8mb4");
-  
-  strncpy(start, cs_name, 5);
-  temp_cs_name= (char *)(utf8_is_utf8mb3 ? "utf8mb3_":"utf8mb4_");
-
-  if (!strncasecmp("utf8_", start,5))
-  {
-    copy_of_name+= 5;
-    result[63]='\0';
-    strcpy(result, temp_cs_name);
-    strcat(result, copy_of_name);
-    result[strlen(copy_of_name)+strlen(temp_cs_name)]='\0';
-    cs_name= (const char *) result;
-  }
   return my_collation_get_by_name(&loader, cs_name, flags);
 }
 
@@ -999,7 +981,7 @@ my_charset_get_by_name(MY_CHARSET_LOADER *loader,
 
   my_pthread_once(&charsets_initialized, init_available_charsets);
 
-  cs_number= get_charset_number(cs_name, cs_flags);
+  cs_number= get_charset_number(cs_name, cs_flags, flags);
   cs= cs_number ? get_internal_charset(loader, cs_number, flags) : NULL;
 
   if (!cs && (flags & MY_WME))
@@ -1018,16 +1000,12 @@ get_charset_by_csname(const char *cs_name, uint cs_flags, myf flags)
 {
   MY_CHARSET_LOADER loader;
   my_charset_loader_init_mysys(&loader);
-
-  if (!strcasecmp("utf8",cs_name))
-    cs_name= (const char*)(flags & MY_UTF8_IS_UTF8MB3 ? "utf8mb3" : "utf8mb4");
-
   return my_charset_get_by_name(&loader, cs_name, cs_flags, flags);
 }
 
 
 /**
-  Resolve character set by the character set name (utf8mb3, latin1, ...).
+  Resolve character set by the character set name (utf8, latin1, ...).
 
   The function tries to resolve character set by the specified name. If
   there is character set with the given name, it is assigned to the "cs"
@@ -1388,7 +1366,7 @@ static const MY_CSET_OS_NAME charsets[] =
 #ifdef UNCOMMENT_THIS_WHEN_WL_WL_4024_IS_DONE
   {"cp54936",        "gb18030",  my_cs_exact},
 #endif
-  {"cp65001",        "utf8mb3",     my_cs_exact},
+  {"cp65001",        "utf8",     my_cs_exact},
 
 #else /* not Windows */
 
@@ -1472,8 +1450,8 @@ static const MY_CSET_OS_NAME charsets[] =
 
   {"US-ASCII",       "latin1",   my_cs_approx},
 
-  {"utf8mb3",           "utf8mb3",     my_cs_exact},
-  {"utf-8",          "utf8mb3",     my_cs_exact},
+  {"utf8",           "utf8",     my_cs_exact},
+  {"utf-8",          "utf8",     my_cs_exact},
 #endif
   {NULL,             NULL,       0}
 };

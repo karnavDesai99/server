@@ -291,7 +291,8 @@ bool load_charset(MEM_ROOT *mem_root,
                   CHARSET_INFO **cs)
 {
   LEX_CSTRING cs_name;
-
+  myf utf8_flag= global_system_variables.old_behavior &
+                 OLD_MODE_UTF8_IS_UTF8MB3 ? MY_UTF8_IS_UTF8MB3 : 0;
   if (field->val_str_nopad(mem_root, &cs_name))
   {
     *cs= dflt_cs;
@@ -299,7 +300,7 @@ bool load_charset(MEM_ROOT *mem_root,
   }
 
   DBUG_ASSERT(cs_name.str[cs_name.length] == 0);
-  *cs= get_charset_by_csname(cs_name.str, MY_CS_PRIMARY, MYF(0));
+  *cs= get_charset_by_csname(cs_name.str, MY_CS_PRIMARY, MYF(utf8_flag));
 
   if (*cs == NULL)
   {
@@ -324,12 +325,10 @@ bool load_collation(THD *thd, MEM_ROOT *mem_root,
     *cl= dflt_cl;
     return TRUE;
   }
+  myf utf8_flag= thd->get_utf8_flag();
 
   DBUG_ASSERT(cl_name.str[cl_name.length] == 0);
-  *cl= get_charset_by_name(cl_name.str,
-                           thd->variables.old_behavior &
-                                OLD_MODE_UTF8_IS_UTF8MB3 ?
-                                  MYF(MY_UTF8_IS_UTF8MB3) : MYF(0));
+  *cl= get_charset_by_name(cl_name.str, MYF(utf8_flag));
 
   if (*cl == NULL)
   {
