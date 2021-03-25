@@ -4523,7 +4523,10 @@ innobase_checkpoint_request(
 		/* We are already flushed. Notify the checkpoint immediately. */
 		commit_checkpoint_notify_ha(entry->hton, entry->cookie);
 		my_free(entry);
-	}
+	} else if (UNIV_UNLIKELY(lsn > log_get_flush_lsn() &&
+		   srv_force_recovery >= SRV_FORCE_NO_BACKGROUND)) {
+			log_write_up_to(lsn, true);
+        }
 }
 
 /*****************************************************************//**
