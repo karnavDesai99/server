@@ -1984,6 +1984,9 @@ static int ddl_log_execute_action(THD *thd, MEM_ROOT *mem_root,
         {
           DBUG_ASSERT(!new_version_ready);
           /* Use original version, remove temporary .frm */
+          error= org_hton->drop_table(hton, to_path);
+          if (non_existing_table_error(error))
+            error= 0;
           to_path[length - reg_ext_length]= FN_EXTCHAR;
           mysql_file_delete(key_file_frm, to_path,
                             MYF(MY_WME|MY_IGNORE_ENOENT));
