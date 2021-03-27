@@ -1641,6 +1641,9 @@ static int innodb_check_version(handlerton *hton, const char *path,
   DBUG_ENTER("innodb_check_version");
   DBUG_ASSERT(hton == innodb_hton_ptr);
 
+  if (!create_id)
+    DBUG_RETURN(0);
+
   char norm_path[FN_REFLEN];
   normalize_table_name(norm_path, path);
 
