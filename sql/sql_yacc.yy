@@ -12227,8 +12227,9 @@ limit_clause:
         | fetch_first_clause
           {
             $$= $1;
-            if (!$$.select_limit->basic_const_item() ||
-                $$.select_limit->val_int() > 0)
+            if (!$$.select_limit ||
+                !$$.select_limit->basic_const_item() ||
+                 $$.select_limit->val_int() > 0)
               Lex->set_stmt_unsafe(LEX::BINLOG_STMT_UNSAFE_LIMIT);
           }
         ;
@@ -12269,6 +12270,13 @@ fetch_first_clause:
             $$.offset_limit= $2;
             $$.explicit_limit= true;
             $$.with_ties= $7;
+          }
+        | OFFSET_SYM limit_option
+          {
+            $$.select_limit= 0;
+            $$.offset_limit= $2;
+            $$.explicit_limit= true;
+            $$.with_ties= false;
           }
         ;
 
