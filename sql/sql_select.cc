@@ -1354,9 +1354,20 @@ JOIN::prepare(TABLE_LIST *tables_init, COND *conds_init, uint og_num,
 
   if (order)
   {
-    bool real_order= FALSE;
-    ORDER *ord;
-    for (ord= order; ord; ord= ord->next)
+    bool requires_sorting= FALSE;
+    /* WITH TIES forces the results to be sorted, even if it's not sanely
+       sortable. */
+    if (select_lex->limit_params.with_ties)
+      requires_sorting= true;
+
+    /* Go through each ORDER BY item and perform the following:
+       1. Detect if none of the items contain meaningful data, which means we
+          can drop the sorting altogether.
+       2. Split any columns with aggregation functions or window functions into
+          their base components and store them as separate fields.
+          (see split_sum_func) for more details.
+    */
+    for (ORDER *ord= order; ord; ord= ord->next)
     {
       Item *item= *ord->item;
       /*
@@ -1365,7 +1376,7 @@ JOIN::prepare(TABLE_LIST *tables_init, COND *conds_init, uint og_num,
         zero length NOT NULL string functions there.
         Such tuples don't contain any data to sort.
       */
-      if (!real_order &&
+      if (!requires_sorting &&
            /* Not a zero length NOT NULL field */
           ((item->type() != Item::FIELD_ITEM ||
             ((Item_field *) item)->field->maybe_null() ||
@@ -1375,14 +1386,25 @@ JOIN::prepare(TABLE_LIST *tables_init, COND *conds_init, uint og_num,
             item->maybe_null ||
             item->result_type() != STRING_RESULT ||
             item->max_length)))
-        real_order= TRUE;
+        requires_sorting= TRUE;
 
       if ((item->with_sum_func() && item->type() != Item::SUM_FUNC_ITEM) ||
           item->with_window_func)
         item->split_sum_func(thd, ref_ptrs, all_fields, SPLIT_SUM_SELECT);
     }
-    if (!real_order)
+    /* Drop the ORDER BY clause if none of the columns contain any data that
+       can produce a meaningful sorted set. */
+    if (!requires_sorting)
       order= NULL;
+  }
+  else
+  {
+    /* The current select does not have an ORDER BY */
+    if (select_lex->limit_params.with_ties)
+    {
+      my_error(ER_WITH_TIES_NEEDS_ORDER, MYF(0));
+      DBUG_RETURN(-1);
+    }
   }
 
   if (having && having->with_sum_func())
@@ -2735,11 +2757,13 @@ int JOIN::optimize_stage2()
   /*
      Remove ORDER BY if GROUP BY is more specific. Example
      GROUP BY a, b ORDER BY a
+     This can not be done if FETCH .. WITH TIES is used as a limit clause.
 
      Alternatively remove ORDER BY if there are aggregate functions and no
      GROUP BY, this always leads to one row result, no point in sorting.
   */
-  if (test_if_subpart(group_list, order) ||
+  if ((!select_lex->limit_params.with_ties &&
+        test_if_subpart(group_list, order)) ||
       (!group_list && tmp_table_param.sum_func_count))
   {
     order=0;
@@ -3678,6 +3702,9 @@ bool JOIN::make_aggr_tables_info()
       sort_tab->filesort->limit=
         (has_group_by || (join_tab + top_join_tab_count > curr_tab + 1)) ?
          select_limit : unit->lim.get_select_limit();
+
+      if (unit->lim.is_with_ties())
+        sort_tab->filesort->limit= HA_POS_ERROR;
     }
     if (!only_const_tables() &&
         !join_tab[const_tables].filesort &&
@@ -3713,6 +3740,13 @@ bool JOIN::make_aggr_tables_info()
   }
   if (select_lex->custom_agg_func_used())
     status_var_increment(thd->status_var.feature_custom_aggregate_functions);
+
+  /* Allocate Cached_items of ORDER BY for FETCH FIRST .. WITH TIES. */
+  if (unit->lim.is_with_ties())
+  {
+    if (alloc_order_fields(this, order))
+      DBUG_RETURN(true);
+  }
 
   fields= curr_fields_list;
   // Reset before execution
@@ -21803,6 +21837,15 @@ end_send(JOIN *join, JOIN_TAB *join_tab, bool end_of_records)
       DBUG_RETURN(NESTED_LOOP_ERROR);
     DBUG_RETURN(NESTED_LOOP_OK);
   }
+
+  if (join->send_records >= join->unit->lim.get_select_limit() &&
+      join->unit->lim.is_with_ties())
+  {
+    /* Stop sending rows if the order fields have changed. */
+    if (test_if_item_cache_changed(join->order_fields) >= 0)
+      join->do_send_rows= false;
+  }
+
   if (join->do_send_rows)
   {
     int error;
@@ -21840,6 +21883,14 @@ end_send(JOIN *join, JOIN_TAB *join_tab, bool end_of_records)
   if (join->send_records >= join->unit->lim.get_select_limit() &&
       join->do_send_rows)
   {
+    if (join->unit->lim.is_with_ties())
+    {
+      /* Prepare the order_fields comparison for with ties. */
+      if (join->send_records == join->unit->lim.get_select_limit())
+        (void) test_if_group_changed(join->order_fields);
+      /* One more loop, to check if the next row matches with_ties or not. */
+      DBUG_RETURN(NESTED_LOOP_OK);
+    }
     if (join->select_options & OPTION_FOUND_ROWS)
     {
       JOIN_TAB *jt=join->join_tab;
@@ -25025,6 +25076,17 @@ make_group_fields(JOIN *main_join, JOIN *curr_join)
   return (0);
 }
 
+static bool
+fill_cached_item_list(THD *thd, List<Cached_item> *list, ORDER *order)
+{
+  for (; order ; order= order->next)
+  {
+    Cached_item *tmp= new_Cached_item(thd, *order->item, true);
+    if (!tmp || list->push_front(tmp))
+      return true;
+  }
+  return false;
+}
 
 /**
   Get a list of buffers for saving last group.
@@ -25033,21 +25095,19 @@ make_group_fields(JOIN *main_join, JOIN *curr_join)
 */
 
 static bool
-alloc_group_fields(JOIN *join,ORDER *group)
+alloc_group_fields(JOIN *join, ORDER *group)
 {
-  if (group)
-  {
-    for (; group ; group=group->next)
-    {
-      Cached_item *tmp=new_Cached_item(join->thd, *group->item, TRUE);
-      if (!tmp || join->group_fields.push_front(tmp))
-	return TRUE;
-    }
-  }
+  if (fill_cached_item_list(join->thd, &join->group_fields, group))
+    return true;
   join->sort_and_group=1;			/* Mark for do_select */
-  return FALSE;
+  return false;
 }
 
+static bool
+alloc_order_fields(JOIN *join, ORDER *order)
+{
+  return fill_cached_item_list(join->thd, &join->order_fields, order);
+}
 
 
 /*
