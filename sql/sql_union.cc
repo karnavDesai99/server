@@ -1349,7 +1349,7 @@ bool st_select_lex_unit::prepare(TABLE_LIST *derived_arg,
 	else
 	{
 	  sl->join->result= result;
-          lim.set_unlimited();
+          lim.clear();
 	  if (!sl->join->procedure &&
 	      result->prepare(sl->join->fields_list, this))
 	  {
