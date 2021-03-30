@@ -1306,6 +1306,7 @@ public:
   */
   double   join_record_count;
   List<Item> *fields;
+  uint order_count_for_with_ties;
   List<Cached_item> order_fields, group_fields, group_fields_cache;
   THD	   *thd;
   Item_sum  **sum_funcs, ***sum_funcs_end;
@@ -1608,6 +1609,8 @@ public:
     sjm_lookup_tables= 0;
     sjm_scan_tables= 0;
     is_orig_degenerated= false;
+
+    order_count_for_with_ties= 0;
   }
 
   /* True if the plan guarantees that it will be returned zero or one row */

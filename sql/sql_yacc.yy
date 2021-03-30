@@ -12445,6 +12445,7 @@ opt_procedure_or_into:
           }
         ;
 
+
 order_or_limit:
           order_clause opt_limit_clause
           {

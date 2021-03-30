@@ -616,6 +616,7 @@ Next alarm time: %lu\n",
 	(ulong)alarm_info.next_alarm_time);
 #endif
   display_table_locks();
+  /*
 #ifdef HAVE_MALLINFO
   struct mallinfo info= mallinfo();
   char llbuff[10][22];
@@ -649,6 +650,7 @@ Memory allocated by threads:             %s\n",
          llstr(tmp.local_memory_used, llbuff[9]));
 
 #endif
+*/
 
 #ifdef HAVE_EVENT_SCHEDULER
   Events::dump_internal_status();

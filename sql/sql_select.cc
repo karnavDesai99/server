@@ -2310,6 +2310,14 @@ int JOIN::optimize_stage2()
   uint no_jbuf_after;
   JOIN_TAB *tab;
   DBUG_ENTER("JOIN::optimize_stage2");
+  // TODO -> This is buggy if order gets changed in between. :(
+  /* For FETCH ... WITH TIES save how many items order had */
+  if (select_lex->limit_params.with_ties)
+  {
+    DBUG_ASSERT(order_count_for_with_ties == 0);
+    for (ORDER *it= order; it; it= it->next)
+      order_count_for_with_ties+= 1;
+  }
 
   if (subq_exit_fl)
     goto setup_subq_exit;
@@ -2762,11 +2770,10 @@ int JOIN::optimize_stage2()
      Alternatively remove ORDER BY if there are aggregate functions and no
      GROUP BY, this always leads to one row result, no point in sorting.
   */
-  if ((!select_lex->limit_params.with_ties &&
-        test_if_subpart(group_list, order)) ||
+  if (test_if_subpart(group_list, order) ||
       (!group_list && tmp_table_param.sum_func_count))
   {
-    order=0;
+    order= 0;
     if (is_indexed_agg_distinct(this, NULL))
       sort_and_group= 0;
   }
@@ -21843,7 +21850,11 @@ end_send(JOIN *join, JOIN_TAB *join_tab, bool end_of_records)
       join->unit->lim.is_with_ties())
   {
     /* Stop sending rows if the order fields have changed. */
-    if (test_if_item_cache_changed(join->order_fields) >= 0)
+    int idx= test_if_item_cache_changed(join->order_fields);
+    // TODO(cvicentiu) document this
+    int difference = join->order_fields.elements - join->order_count_for_with_ties;
+    // TODO figure out a clearer condition...
+    if (idx >= 0 && (difference == 0 || idx < difference))
       join->do_send_rows= false;
   }
 
@@ -21968,6 +21979,7 @@ end_send_group(JOIN *join, JOIN_TAB *join_tab, bool end_of_records)
     {
       if (join->procedure)
 	join->procedure->end_group();
+      /* Test if there was a group change. */
       if (idx < (int) join->send_group_parts)
       {
 	int error=0;
@@ -21986,6 +21998,7 @@ end_send_group(JOIN *join, JOIN_TAB *join_tab, bool end_of_records)
 	}
 	else
 	{
+          /* Reset all sum functions on group change. */
 	  if (!join->first_record)
 	  {
             List_iterator_fast<Item> it(*join->fields);
@@ -22000,6 +22013,15 @@ end_send_group(JOIN *join, JOIN_TAB *join_tab, bool end_of_records)
 	    error= -1;				// Didn't satisfy having
 	  else
 	  {
+            /*
+            if (join->send_records > join->unit->lim.get_select_limit() &&
+                join->unit->lim.is_with_ties())
+            {
+              int difference = 1 ;
+              if (idx < difference)
+                join->do_send_rows= 0;
+            }
+            */
 	    if (join->do_send_rows)
             {
 	      error= join->result->send_data_with_check(*fields,
@@ -22028,10 +22050,17 @@ end_send_group(JOIN *join, JOIN_TAB *join_tab, bool end_of_records)
 	if (join->send_records >= join->unit->lim.get_select_limit() &&
 	    join->do_send_rows)
 	{
-	  if (!(join->select_options & OPTION_FOUND_ROWS))
-	    DBUG_RETURN(NESTED_LOOP_QUERY_LIMIT); // Abort nicely
-	  join->do_send_rows=0;
-	  join->unit->lim.set_unlimited();
+          int difference = join->group_fields.elements -
+                           join->order_count_for_with_ties; // TODO ( this is just a temp hack. )
+          if (join->send_records >= join->unit->lim.get_select_limit() &&
+              ((join->unit->lim.is_with_ties() && idx < difference) ||
+               !join->unit->lim.is_with_ties()))
+          {
+            if (!(join->select_options & OPTION_FOUND_ROWS))
+              DBUG_RETURN(NESTED_LOOP_QUERY_LIMIT); // Abort nicely
+            join->do_send_rows=0;
+            join->unit->lim.set_unlimited();
+          }
         }
         else if (join->send_records >= join->fetch_limit)
         {

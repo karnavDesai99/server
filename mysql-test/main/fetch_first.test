@@ -492,6 +492,14 @@ order by first_name;
 --echo # specific sort of group by, that WITH TIES still gets executed.
 --echo #
 
+explain
+select first_name, last_name, sum(score)
+from t1
+group by first_name, last_name
+order by first_name
+offset 1
+fetch first 2 rows with ties;
+
 --sorted_result
 select first_name, last_name, sum(score)
 from t1
@@ -771,6 +779,7 @@ from t1
 group by a, b
 order by a
 fetch first 1 rows with ties;
+SELECT FOUND_ROWS();
 
 --echo #
 --echo # Test index read optimization with ORDER BY as sub part of GROUP BY
@@ -786,6 +795,5 @@ group by a, b
 order by a
 fetch first 1 rows with ties;
 
-SELECT FOUND_ROWS();
 
 drop table t1;
