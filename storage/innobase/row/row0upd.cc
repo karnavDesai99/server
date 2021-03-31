@@ -2412,7 +2412,7 @@ row_upd_clust_rec_by_insert(
 	if (index->is_instant()) entry->trim(*index);
 	ut_ad(dtuple_get_info_bits(entry) == 0);
 
-	{
+	if (!(trx->id == 0 && index->table->is_temporary())) {
 		dfield_t* t = dtuple_get_nth_field(entry, index->db_trx_id());
 		ut_ad(t->len == DATA_TRX_ID_LEN);
 		trx_write_trx_id(static_cast<byte*>(t->data), trx->id);
