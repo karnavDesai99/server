@@ -515,8 +515,10 @@ row_upd_index_entry_sys_field(
 	field = static_cast<byte*>(dfield_get_data(dfield));
 
 	if (type == DATA_TRX_ID) {
-		ut_ad(val > 0);
-		trx_write_trx_id(field, val);
+		ut_ad(val > 0 || index->table->is_temporary());
+		if (val > 0) {
+			trx_write_trx_id(field, val);
+		}
 	} else {
 		ut_ad(type == DATA_ROLL_PTR);
 		trx_write_roll_ptr(field, val);
