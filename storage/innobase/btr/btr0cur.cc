@@ -3550,7 +3550,8 @@ fail_err:
 				      || thr->graph->trx->id
 				      == trx_read_trx_id(
 					      static_cast<const byte*>(
-						      trx_id->data)));
+							trx_id->data))
+				      || index->table->is_temporary());
 			}
 		}
 #endif
