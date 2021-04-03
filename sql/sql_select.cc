@@ -2310,14 +2310,6 @@ int JOIN::optimize_stage2()
   uint no_jbuf_after;
   JOIN_TAB *tab;
   DBUG_ENTER("JOIN::optimize_stage2");
-  // TODO -> This is buggy if order gets changed in between. :(
-  /* For FETCH ... WITH TIES save how many items order had */
-  if (select_lex->limit_params.with_ties)
-  {
-    DBUG_ASSERT(order_count_for_with_ties == 0);
-    for (ORDER *it= order; it; it= it->next)
-      order_count_for_with_ties+= 1;
-  }
 
   if (subq_exit_fl)
     goto setup_subq_exit;
@@ -2584,6 +2576,17 @@ int JOIN::optimize_stage2()
     if (!order && org_order)
       skip_sort_order= 1;
   }
+
+  // TODO -> This is buggy if order gets changed in between. :(
+  /* For FETCH ... WITH TIES save how many items order had */
+  if (select_lex->limit_params.with_ties)
+  {
+    DBUG_ASSERT(order_count_for_with_ties == 0);
+    for (ORDER *it= order; it; it= it->next)
+      order_count_for_with_ties+= 1;
+  }
+
+
   /*
      Check if we can optimize away GROUP BY/DISTINCT.
      We can do that if there are no aggregate functions, the
@@ -22050,16 +22053,19 @@ end_send_group(JOIN *join, JOIN_TAB *join_tab, bool end_of_records)
 	if (join->send_records >= join->unit->lim.get_select_limit() &&
 	    join->do_send_rows)
 	{
-          int difference = join->group_fields.elements -
-                           join->order_count_for_with_ties; // TODO ( this is just a temp hack. )
-          if (join->send_records >= join->unit->lim.get_select_limit() &&
-              ((join->unit->lim.is_with_ties() && idx < difference) ||
-               !join->unit->lim.is_with_ties()))
+          if (join->send_records >= join->unit->lim.get_select_limit())
           {
-            if (!(join->select_options & OPTION_FOUND_ROWS))
-              DBUG_RETURN(NESTED_LOOP_QUERY_LIMIT); // Abort nicely
-            join->do_send_rows=0;
-            join->unit->lim.set_unlimited();
+            /* This function gets executed when order by is a subset of group by. */
+            int difference = join->group_fields.elements -
+                             join->order_count_for_with_ties;
+            if (!join->unit->lim.is_with_ties() ||
+                (difference == 0 || idx < difference))
+            {
+              if (!(join->select_options & OPTION_FOUND_ROWS))
+                DBUG_RETURN(NESTED_LOOP_QUERY_LIMIT); // Abort nicely
+              join->do_send_rows=0;
+              join->unit->lim.set_unlimited();
+            }
           }
         }
         else if (join->send_records >= join->fetch_limit)

@@ -649,6 +649,15 @@ Silvia	Ganush	10
 # Test with ties with group by. Make sure that if order by is a less
 # specific sort of group by, that WITH TIES still gets executed.
 #
+explain
+select first_name, last_name, sum(score)
+from t1
+group by first_name, last_name
+order by first_name
+offset 1
+fetch first 2 rows with ties;
+id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
+1	SIMPLE	t1	ALL	NULL	NULL	NULL	NULL	8	Using temporary; Using filesort
 select first_name, last_name, sum(score)
 from t1
 group by first_name, last_name
@@ -782,7 +791,7 @@ select * from temp_table
 order by first_name, last_name;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
 1	PRIMARY	<derived2>	ALL	NULL	NULL	NULL	NULL	2	Using filesort
-2	DERIVED	t1	range	t1_name	t1_name	103	NULL	3	Using where; Using index; Using temporary; Using filesort
+2	DERIVED	t1	range	t1_name	t1_name	103	NULL	3	Using where; Using index
 with temp_table as (
 select first_name, last_name
 from t1
@@ -1024,6 +1033,9 @@ a	b	count(*)
 1	1	1
 1	2	1
 1	3	1
+SELECT FOUND_ROWS();
+FOUND_ROWS()
+6
 #
 # Test index read optimization with ORDER BY as sub part of GROUP BY
 #
@@ -1039,8 +1051,194 @@ group by a, b
 order by a
 fetch first 1 rows with ties;
 id	select_type	table	type	possible_keys	key	key_len	ref	rows	Extra
-1	SIMPLE	t1	index	NULL	a	10	NULL	6	Using index; Using temporary; Using filesort
-SELECT FOUND_ROWS();
-FOUND_ROWS()
-6
+1	SIMPLE	t1	index	NULL	a	10	NULL	1	Using index
+#
+# Test FETCH ... WITH TIES / ONLY with prepared statements
+#
+prepare s from "select a, b from t1 order by a fetch first ? rows with ties";
+set @a='qwe';
+execute s using @a;
+a	b
+set @a=-1;
+execute s using @a;
+ERROR HY000: Incorrect arguments to EXECUTE
+prepare s2 from "select a, b from t1 order by a offset ? fetch first ? rows with ties";
+set @offset=1;
+set @limit_count= 2;
+execute s2 using @offset, @limit_count;
+a	b
+1	2
+1	3
+execute s2 using @offset, 3;
+a	b
+1	2
+1	3
+2	1
+2	2
+execute s2 using -1, 3;
+ERROR HY000: Incorrect arguments to EXECUTE
+#
+# Test with ties with a constant order by.
+#
+select a, b
+from t1
+order by 'x'
+fetch first 2 rows with ties;
+a	b
+1	1
+1	2
+1	3
+2	1
+2	2
+3	1
+select b, sum(a)
+from t1
+group by b
+order by 'x', 'y', 'z'
+fetch first 2 rows with ties;
+b	sum(a)
+1	6
+2	3
+3	1
+#
+# Test with ties when group by is used and order by gets eliminated.
+#
+select b, sum(a)
+from t1
+group by b
+order by 'x', 'y', 'z'
+fetch first 2 rows with ties;
+b	sum(a)
+1	6
+2	3
+3	1
+#
+# Test an ill formed SELECT using MySQL/MariaDBs group by extension
+# of not requiring all non-aggregate fields to be part of group
+# by.
+#
+select b, a, sum(a)
+from t1
+group by a
+order by b, 'x', 'y', 'z'
+fetch first 2 rows with ties;
+b	a	sum(a)
+1	3	3
+1	1	3
+1	2	4
+delete from t1;
+insert into t1 values (1,1), (1,2), (1,3), (2,1), (2,2), (3,2), (3, 3);
+select b, a, sum(a)
+from t1
+group by a
+order by b, 'x', 'y', 'z'
+fetch first 1 rows with ties;
+b	a	sum(a)
+1	1	3
+1	2	4
+select b, a, sum(a)
+from t1
+group by a
+order by 'x', b, 'x', 'y', 'z'
+fetch first 1 rows with ties;
+b	a	sum(a)
+1	1	3
+1	2	4
+#
+# Test with ties when order by a const column is used.
+#
+select a, b
+from t1
+order by a, 'a'
+fetch first 2 rows with ties;
+a	b
+1	1
+1	2
+1	3
+select a, b, sum(a)
+from t1
+group by a, b
+order by sum(a)
+fetch first 1 rows with ties;
+a	b	sum(a)
+1	3	1
+1	1	1
+1	2	1
+select a, b, sum(a)
+from t1
+group by a, b
+order by sum(b)
+fetch first 1 rows with ties;
+a	b	sum(a)
+2	1	2
+1	1	1
+select a, b, sum(a)
+from t1
+group by a, b
+order by a
+fetch first 1 rows with ties;
+a	b	sum(a)
+1	1	1
+1	2	1
+1	3	1
+select a, b, sum(a)
+from t1
+group by a, b
+order by a, 'x'
+fetch first 1 rows with ties;
+a	b	sum(a)
+1	1	1
+1	2	1
+1	3	1
+select a, b, sum(a)
+from t1
+group by a, b
+order by a, b
+fetch first 1 rows with ties;
+a	b	sum(a)
+1	1	1
+select a, b, sum(a)
+from t1
+group by a, b
+order by a, b
+fetch first 2 rows with ties;
+a	b	sum(a)
+1	1	1
+1	2	1
+select a, b, sum(a)
+from t1
+group by a, b
+order by a, b, 'x'
+fetch first 1 rows with ties;
+a	b	sum(a)
+1	1	1
+select a, b, sum(a)
+from t1
+group by a, 'x', b
+order by a, b, 'x'
+fetch first 1 rows with ties;
+a	b	sum(a)
+1	1	1
+select a, b, sum(a)
+from t1
+group by 'x', a, b
+order by a, b, 'x'
+fetch first 1 rows with ties;
+a	b	sum(a)
+1	1	1
+select a, b, sum(a)
+from t1
+group by a, b
+order by 'x', a, 'x', b, 't', b
+fetch first 1 rows with ties;
+a	b	sum(a)
+1	1	1
+select a, b, sum(a)
+from t1
+group by a, b
+order by b, 't', b
+fetch first 1 rows with ties;
+a	b	sum(a)
+2	1	2
+1	1	1
 drop table t1;
