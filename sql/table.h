@@ -2517,6 +2517,7 @@ struct TABLE_LIST
   bool          merged;
   bool          merged_for_insert;
   bool          sequence;  /* Part of NEXTVAL/CURVAL/LASTVAL */
+  bool          vers_skip_auto_create;
 
   /*
     Items created by create_view_field and collected to change them in case

@@ -1641,6 +1641,10 @@ bool TABLE::vers_need_hist_part(const THD *thd, const TABLE_LIST *table_list) co
       if (thd->lex->duplicates != DUP_UPDATE)
         break;
     /* fall-through: */
+    case SQLCOM_LOAD:
+      if (thd->lex->duplicates != DUP_REPLACE)
+        break;
+    /* fall-through: */
     case SQLCOM_LOCK_TABLES:
     case SQLCOM_DELETE:
     case SQLCOM_UPDATE:
@@ -1652,7 +1656,15 @@ bool TABLE::vers_need_hist_part(const THD *thd, const TABLE_LIST *table_list) co
     default:;
       break;
     }
-    if (thd->rgi_slave && thd->rgi_slave->current_event && thd->lex->sql_command == SQLCOM_END)
+    /*
+      TODO: make row events set thd->lex->sql_command appropriately.
+
+      Sergei Golubchik: f.ex. currently row events increment
+      thd->status_var.com_stat[] each event for its own SQLCOM_xxx, it won't be
+      needed if they'll just set thd->lex->sql_command.
+    */
+    if (thd->rgi_slave && thd->rgi_slave->current_event &&
+        thd->lex->sql_command == SQLCOM_END)
     {
       switch (thd->rgi_slave->current_event->get_type_code())
       {
@@ -1825,8 +1837,11 @@ bool open_table(THD *thd, TABLE_LIST *table_list, Open_table_context *ot_ctx)
       part_names_error= set_partitions_as_used(table_list, table);
       if (table->vers_need_hist_part(thd, table_list))
       {
-        /* Rotation is still needed under LOCK TABLES */
-        table->part_info->vers_set_hist_part(thd, false);
+        /*
+          New partitions are not auto-created under LOCK TABLES (TODO: fix it)
+          but rotation can still happen.
+        */
+        (void) table->part_info->vers_set_hist_part(thd, NULL);
       }
 #endif
       goto reset;
@@ -2086,7 +2101,19 @@ retry_share:
   if (!ot_ctx->vers_create_count &&
       table->vers_need_hist_part(thd, table_list))
   {
-    ot_ctx->vers_create_count= table->part_info->vers_set_hist_part(thd, true);
+    /*
+       NOTE: The semantics of vers_set_hist_part() is double: even when we
+       don't need auto-create, we need to update part_info->hist_part.
+    */
+    uint *create_count= table_list->vers_skip_auto_create ?
+      NULL : &ot_ctx->vers_create_count;
+    table_list->vers_skip_auto_create= true;
+    if (table->part_info->vers_set_hist_part(thd, create_count))
+    {
+      MYSQL_UNBIND_TABLE(table->file);
+      tc_release_table(table);
+      DBUG_RETURN(TRUE);
+    }
     if (ot_ctx->vers_create_count)
     {
       MYSQL_UNBIND_TABLE(table->file);
@@ -3179,6 +3206,7 @@ request_backoff_action(enum_open_table_action action_arg,
     m_failed_table->init_one_table(&table->db, &table->table_name, &table->alias, TL_WRITE);
     m_failed_table->open_strategy= table->open_strategy;
     m_failed_table->mdl_request.set_type(MDL_EXCLUSIVE);
+    m_failed_table->vers_skip_auto_create= table->vers_skip_auto_create;
   }
   m_action= action_arg;
   return FALSE;
@@ -3240,12 +3268,14 @@ Open_table_context::recover_from_failed_open()
     case OT_DISCOVER:
     case OT_REPAIR:
     case OT_ADD_HISTORY_PARTITION:
+      DBUG_ASSERT(!m_thd->get_stmt_da()->is_set());
       result= lock_table_names(m_thd, m_thd->lex->create_info, m_failed_table,
                                NULL, get_timeout(), 0);
       if (result)
       {
         if (m_action == OT_ADD_HISTORY_PARTITION)
         {
+          // MDEV-23642 Locking timeout caused by auto-creation affects original DML
           m_thd->clear_error();
           result= false;
         }
@@ -3294,7 +3324,7 @@ Open_table_context::recover_from_failed_open()
 
           DBUG_ASSERT(vers_create_count);
           TABLE_LIST *tl= m_failed_table;
-          result= vers_add_auto_hist_parts(m_thd, tl, vers_create_count);
+          result= vers_add_hist_parts(m_thd, tl, vers_create_count);
           if (!m_thd->transaction->stmt.is_empty())
             trans_commit_stmt(m_thd);
           close_tables_for_reopen(m_thd, &tl, start_of_statement_svp());
