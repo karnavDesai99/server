@@ -93,15 +93,23 @@ if ($opt_password eq '')
 
 ## Socket takes precedence.
 my $dsn;
-$dsn ="DBI:MariaDB:;";
+my $prefix= 'mysql';
+
+if (eval {DBI->install_driver("MariaDB")}) {
+  $dsn ="DBI:MariaDB:;";
+  $prefix= 'mariadb';
+} 
+else {
+  $dsn = "DBI:mysql:;";
+}
 
 if ($opt_socket and -S $opt_socket)
 {
-    $dsn .= "mariadb_socket=$opt_socket";
+    $dsn .= "${prefix}_socket=$opt_socket";
 }
 else
 {
-  $dsn = "DBI:MariaDB:host=$sqlhost;port=$opt_port";
+  $dsn .= "host=$sqlhost;port=$opt_port";
 }
 
 # make the connection to MariaDB
