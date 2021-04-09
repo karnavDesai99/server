@@ -222,7 +222,7 @@ sub setpwd
   {
     $pass = "PASSWORD(". $dbh->quote($pass) . ")";
   }
-  my $uh= $user.'@'.$host;
+  my $uh= "$user@$host";
   my $sth = $dbh->prepare("set password for $uh =$pass") || die $dbh->errstr;
   $sth->execute || die $dbh->errstr;
   $sth->finish;
