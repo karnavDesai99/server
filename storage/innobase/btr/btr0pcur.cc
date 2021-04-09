@@ -182,21 +182,17 @@ before_first:
 	UNIV_PREFETCH_R(rec);
 
 	if (index->is_ibuf()) {
-		cursor->old_n_fields = rec_get_n_fields_old(rec);
+		cursor->old_n_fields = uint16(rec_get_n_fields_old(rec));
 	} else {
-		if (page_rec_is_leaf(rec)) {
-			cursor->old_n_fields
-				= dict_index_get_n_unique_in_tree(index);
-		} else if (index->is_spatial()) {
+		cursor->old_n_fields = static_cast<uint16>(
+			dict_index_get_n_unique_in_tree(index));
+		if (index->is_spatial() && !page_rec_is_leaf(rec)) {
 			ut_ad(dict_index_get_n_unique_in_tree_nonleaf(index)
 			      == DICT_INDEX_SPATIAL_NODEPTR_SIZE);
 			/* For R-tree, we have to compare
 			the child page numbers as well. */
 			cursor->old_n_fields
 				= DICT_INDEX_SPATIAL_NODEPTR_SIZE + 1;
-		} else {
-			cursor->old_n_fields
-				= dict_index_get_n_unique_in_tree(index);
 		}
 	}
 
