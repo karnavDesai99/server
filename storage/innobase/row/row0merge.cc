@@ -1,7 +1,7 @@
 /*****************************************************************************
 
 Copyright (c) 2005, 2017, Oracle and/or its affiliates. All Rights Reserved.
-Copyright (c) 2014, 2020, MariaDB Corporation.
+Copyright (c) 2014, 2021, MariaDB Corporation.
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -2038,7 +2038,8 @@ end_of_index:
 		rec = page_cur_get_rec(cur);
 
 		if (online) {
-			offsets = rec_get_offsets(rec, clust_index, NULL, true,
+			offsets = rec_get_offsets(rec, clust_index, NULL,
+						  clust_index->n_core_fields,
 						  ULINT_UNDEFINED, &row_heap);
 			rec_trx_id = row_get_rec_trx_id(rec, clust_index,
 							offsets);
@@ -2130,7 +2131,8 @@ end_of_index:
 			duplicate keys. */
 			continue;
 		} else {
-			offsets = rec_get_offsets(rec, clust_index, NULL, true,
+			offsets = rec_get_offsets(rec, clust_index, NULL,
+						  clust_index->n_core_fields,
 						  ULINT_UNDEFINED, &row_heap);
 			/* This is a locking ALTER TABLE.
 
